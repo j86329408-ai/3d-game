@@ -1,0 +1,118 @@
+index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>3D Open World</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { margin: 0; overflow: hidden; background: black; }
+  #ui {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-family: Arial;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<div id="ui">W A S D — Move | Mouse — Look</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+
+<script>
+/* SCENE */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+
+/* CAMERA */
+const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
+
+/* RENDERER */
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+/* LIGHT */
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1));
+const sun = new THREE.DirectionalLight(0xffffff, 1);
+sun.position.set(50, 100, 50);
+scene.add(sun);
+
+/* OPEN WORLD GROUND */
+const groundGeo = new THREE.PlaneGeometry(500, 500);
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x228b22 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+
+/* RANDOM OBJECTS (trees/rocks) */
+for (let i = 0; i < 200; i++) {
+  const obj = new THREE.Mesh(
+    new THREE.BoxGeometry(2, 5, 2),
+    new THREE.MeshStandardMaterial({ color: 0x654321 })
+  );
+  obj.position.set(
+    Math.random() * 400 - 200,
+    2.5,
+    Math.random() * 400 - 200
+  );
+  scene.add(obj);
+}
+
+/* CHARACTER */
+const player = new THREE.Mesh(
+  new THREE.CapsuleGeometry(1, 2, 8, 16),
+  new THREE.MeshStandardMaterial({ color: 0x1db954 })
+);
+player.position.y = 2;
+scene.add(player);
+
+/* CAMERA FOLLOW */
+camera.position.set(0, 5, 10);
+
+/* CONTROLS */
+const keys = {};
+addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+function movePlayer() {
+  const speed = 0.2;
+  if (keys["w"]) player.position.z -= speed;
+  if (keys["s"]) player.position.z += speed;
+  if (keys["a"]) player.position.x -= speed;
+  if (keys["d"]) player.position.x += speed;
+}
+
+/* ANIMATE */
+function animate() {
+  requestAnimationFrame(animate);
+  movePlayer();
+
+  camera.position.lerp(
+    new THREE.Vector3(
+      player.position.x,
+      player.position.y + 6,
+      player.position.z + 10
+    ),
+    0.1
+  );
+  camera.lookAt(player.position);
+
+  renderer.render(scene, camera);
+}
+animate();
+
+/* RESIZE */
+addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+
+</body>
+</html>
